@@ -12,15 +12,17 @@ import { getDatabase, ref, onValue, push, remove, set } from "https://www.gstati
 //    (IMPORTANTE: Inicie em "Modo de Teste" para permitir leitura/escrita)
 // 4. Copie as chaves do seu projeto e substitua abaixo:
 
-const firebaseConfig = {
-    apiKey: "SUA_API_KEY_AQUI",
-    authDomain: "seu-projeto.firebaseapp.com",
-    databaseURL: "https://seu-projeto-default-rtdb.firebaseio.com",
-    projectId: "seu-projeto",
-    storageBucket: "seu-projeto.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:1234567:web:abcdef"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyBWjGpgbAmLHr2bAyV97MHa9S63S-rUTVo",
+    authDomain: "posto-30039.firebaseapp.com",
+    databaseURL: "https://posto-30039-default-rtdb.firebaseio.com",
+    projectId: "posto-30039",
+    storageBucket: "posto-30039.firebasestorage.app",
+    messagingSenderId: "627792021540",
+    appId: "1:627792021540:web:2bfa2f3ac2d957b689b0b1",
+    measurementId: "G-KEQRFLJF0G"
+  };
+
 
 // Verifica se você já configurou o Firebase
 const isFirebaseConfigured = firebaseConfig.apiKey !== "SUA_API_KEY_AQUI";
