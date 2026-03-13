@@ -53,6 +53,7 @@ header {
     font-size: 2.5rem;
     color: var(--primary);
     background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -183,6 +184,59 @@ input:focus, select:focus {
 
 .hidden {
     display: none !important;
+}
+
+/* Map specific styles */
+.map-container {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid var(--card-border);
+    background: var(--input-bg);
+    z-index: 1; /* Keep map below modals/popups */
+}
+
+.picker-map {
+    height: 250px;
+}
+
+.main-map {
+    height: 400px;
+    margin-top: 1rem;
+}
+
+.map-group {
+    margin-bottom: 2rem;
+}
+
+.location-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    width: auto;
+}
+
+.status-msg {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.status-msg.success { color: var(--accent-green); }
+.status-msg.error { color: var(--accent-red); }
+
+/* Fix Leaflet text colors inside Dark Mode */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+    background: var(--bg-color);
+    color: var(--text-main);
+    border: 1px solid var(--card-border);
+}
+.leaflet-container a.leaflet-popup-close-button {
+    color: var(--text-muted);
 }
 
 .filter-group {
@@ -333,6 +387,27 @@ tr:last-child td {
 
 .btn-delete:hover {
     background: var(--accent-red);
+    color: white;
+}
+
+.btn-maps {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--accent-green);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.5rem;
+    text-decoration: none;
+}
+
+.btn-maps:hover {
+    background: var(--accent-green);
     color: white;
 }
 
