@@ -41,9 +41,14 @@
                             <input type="number" id="price" step="0.01" min="0.01" placeholder="Ex: 5.49" required>
                         </div>
                     </div>
-                    <button type="submit" class="btn-primary">
-                        <i class="fa-solid fa-plus"></i> Adicionar
-                    </button>
+                    <div class="form-actions">
+                        <button type="submit" id="submit-btn" class="btn-primary">
+                            <i class="fa-solid fa-plus"></i> <span id="submit-text">Adicionar</span>
+                        </button>
+                        <button type="button" id="cancel-btn" class="btn-secondary hidden" onclick="window.cancelEdit()">
+                            <i class="fa-solid fa-xmark"></i> Cancelar
+                        </button>
+                    </div>
                 </form>
             </section>
 

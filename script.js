@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getDatabase, ref, onValue, push, remove, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+import { getDatabase, ref, onValue, push, remove, set, update } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
 // ==========================================
 // 🔴 ATENÇÃO: CONFIGURAÇÃO DO FIREBASE (NUVEM)
@@ -12,7 +12,7 @@ import { getDatabase, ref, onValue, push, remove, set } from "https://www.gstati
 //    (IMPORTANTE: Inicie em "Modo de Teste" para permitir leitura/escrita)
 // 4. Copie as chaves do seu projeto e substitua abaixo:
 
-  const firebaseConfig = {
+const firebaseConfig = {
     apiKey: "AIzaSyBWjGpgbAmLHr2bAyV97MHa9S63S-rUTVo",
     authDomain: "posto-30039.firebaseapp.com",
     databaseURL: "https://posto-30039-default-rtdb.firebaseio.com",
@@ -21,8 +21,7 @@ import { getDatabase, ref, onValue, push, remove, set } from "https://www.gstati
     messagingSenderId: "627792021540",
     appId: "1:627792021540:web:2bfa2f3ac2d957b689b0b1",
     measurementId: "G-KEQRFLJF0G"
-  };
-
+};
 
 // Verifica se você já configurou o Firebase
 const isFirebaseConfigured = firebaseConfig.apiKey !== "SUA_API_KEY_AQUI";
@@ -48,6 +47,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const priceInput = document.getElementById('price');
     const stationsList = document.getElementById('stations-list');
     const filterFuel = document.getElementById('filter-fuel');
+
+    const submitBtn = document.getElementById('submit-btn');
+    const submitText = document.getElementById('submit-text');
+    const submitIcon = submitBtn.querySelector('i');
+    const cancelBtn = document.getElementById('cancel-btn');
+
+    let editingId = null;
 
     // Stats values elements
     const cheapestPriceEl = document.getElementById('cheapest-price');
@@ -81,30 +87,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
     form.addEventListener('submit', (e) => {
         e.preventDefault();
-        
+
         const name = stationNameInput.value.trim();
         const fuel = fuelTypeInput.value;
         const price = parseFloat(priceInput.value);
 
         if (name && fuel && price > 0) {
-            const newStation = {
+            const stationData = {
                 name,
                 fuel,
                 price,
                 timestamp: Date.now()
             };
 
-            if (isFirebaseConfigured) {
-                // Salva na nuvem (Firebase cuidará de enviar para todos)
-                push(stationsRef, newStation);
+            if (editingId) {
+                // Modo Edição
+                if (isFirebaseConfigured) {
+                    const itemRef = ref(db, 'gas-stations/' + editingId);
+                    update(itemRef, stationData);
+                } else {
+                    const index = stations.findIndex(s => s.id === editingId);
+                    if (index !== -1) {
+                        stations[index] = { ...stations[index], ...stationData };
+                        localStorage.setItem('gasStations', JSON.stringify(stations));
+                        updateUI();
+                    }
+                }
+                window.cancelEdit(); // Volta ao normal
             } else {
-                // Salva localmente (Modo offline)
-                newStation.id = Date.now().toString();
-                stations.push(newStation);
-                localStorage.setItem('gasStations', JSON.stringify(stations));
-                updateUI();
+                // Modo Criação
+                if (isFirebaseConfigured) {
+                    push(stationsRef, stationData);
+                } else {
+                    stationData.id = Date.now().toString();
+                    stations.push(stationData);
+                    localStorage.setItem('gasStations', JSON.stringify(stations));
+                    updateUI();
+                }
             }
-            
+
             // Limpa o formulário
             stationNameInput.value = '';
             priceInput.value = '';
@@ -125,18 +146,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filteredStations.forEach(station => {
             const row = document.createElement('tr');
-            
+
             row.innerHTML = `
                 <td data-label="Posto"><strong>${escapeHTML(station.name)}</strong></td>
                 <td data-label="Combustível"><span class="fuel-badge">${escapeHTML(station.fuel)}</span></td>
                 <td data-label="Preço"><strong>${formatCurrency(station.price)}</strong></td>
                 <td data-label="Ação">
-                    <button class="btn-delete" onclick="window.deleteStation('${station.id}')" title="Remover">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
+                    <div class="action-buttons">
+                        <button class="btn-edit" onclick="window.editStation('${station.id}')" title="Editar">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="btn-delete" onclick="window.deleteStation('${station.id}')" title="Remover">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
             `;
-            
+
             stationsList.appendChild(row);
         });
     }
@@ -180,8 +206,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateUI() {
         const filterValue = filterFuel.value;
-        const filteredStations = filterValue === 'Todos' 
-            ? stations 
+        const filteredStations = filterValue === 'Todos'
+            ? stations
             : stations.filter(s => s.fuel === filterValue);
 
         // Sort by price
@@ -191,8 +217,36 @@ document.addEventListener('DOMContentLoaded', () => {
         updateStats(filteredStations);
     }
 
+    window.editStation = function (id) {
+        const station = stations.find(s => s.id === id);
+        if (station) {
+            stationNameInput.value = station.name;
+            fuelTypeInput.value = station.fuel;
+            priceInput.value = station.price;
+
+            editingId = id;
+            submitText.textContent = 'Salvar Edição';
+            submitIcon.className = 'fa-solid fa-check';
+            cancelBtn.classList.remove('hidden');
+
+            // Rolar a tela para o formulário no mobile
+            document.querySelector('.input-section').scrollIntoView({ behavior: 'smooth' });
+            stationNameInput.focus();
+        }
+    };
+
+    window.cancelEdit = function () {
+        editingId = null;
+        stationNameInput.value = '';
+        priceInput.value = '';
+
+        submitText.textContent = 'Adicionar';
+        submitIcon.className = 'fa-solid fa-plus';
+        cancelBtn.classList.add('hidden');
+    };
+
     // Expondo função globalmente para o botão "Remover" do HTML funcionar
-    window.deleteStation = function(id) {
+    window.deleteStation = function (id) {
         if (confirm('Deseja realmente remover este registro para todos?')) {
             if (isFirebaseConfigured) {
                 // Deleta da nuvem
@@ -212,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function escapeHTML(str) {
-        return (str || '').toString().replace(/[&<>'"]/g, 
+        return (str || '').toString().replace(/[&<>'"]/g,
             tag => ({
                 '&': '&amp;',
                 '<': '&lt;',
