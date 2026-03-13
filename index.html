@@ -29,19 +29,22 @@
                         <label for="station-name">Nome do Posto</label>
                         <input type="text" id="station-name" placeholder="Ex: Posto Ipiranga Centro" required>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="fuel-type">Combustível</label>
-                            <select id="fuel-type" required>
-                                <option value="Gasolina Comum">Gasolina Comum</option>
-                                <option value="Gasolina Aditivada">Gasolina Aditivada</option>
-                                <option value="Etanol">Etanol</option>
-                                <option value="Diesel">Diesel</option>
-                            </select>
+                    <div class="form-row prices-row">
+                        <div class="form-group price-input">
+                            <label for="price-gascomum">Gasolina Comum</label>
+                            <input type="number" id="price-gascomum" step="0.01" min="0.01" placeholder="Ex: 5.49">
                         </div>
-                        <div class="form-group">
-                            <label for="price">Preço (R$)</label>
-                            <input type="number" id="price" step="0.01" min="0.01" placeholder="Ex: 5.49" required>
+                        <div class="form-group price-input">
+                            <label for="price-gasaditivada">Gasolina Aditivada</label>
+                            <input type="number" id="price-gasaditivada" step="0.01" min="0.01" placeholder="Ex: 5.69">
+                        </div>
+                        <div class="form-group price-input">
+                            <label for="price-etanol">Etanol</label>
+                            <input type="number" id="price-etanol" step="0.01" min="0.01" placeholder="Ex: 3.49">
+                        </div>
+                        <div class="form-group price-input">
+                            <label for="price-diesel">Diesel</label>
+                            <input type="number" id="price-diesel" step="0.01" min="0.01" placeholder="Ex: 6.10">
                         </div>
                     </div>
                     
@@ -121,9 +124,8 @@
                             <thead>
                                 <tr>
                                     <th>Posto</th>
-                                    <th>Combustível</th>
-                                    <th>Preço (R$)</th>
-                                    <th>Ação</th>
+                                    <th>Preços Registrados</th>
+                                    <th style="text-align: right;">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="stations-list">

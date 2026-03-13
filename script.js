@@ -43,8 +43,15 @@ if (isFirebaseConfigured) {
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('price-form');
     const stationNameInput = document.getElementById('station-name');
-    const fuelTypeInput = document.getElementById('fuel-type');
-    const priceInput = document.getElementById('price');
+    
+    // Novo formato de entradas de preço
+    const priceInputs = {
+        'Gasolina Comum': document.getElementById('price-gascomum'),
+        'Gasolina Aditivada': document.getElementById('price-gasaditivada'),
+        'Etanol': document.getElementById('price-etanol'),
+        'Diesel': document.getElementById('price-diesel'),
+    };
+    
     const stationsList = document.getElementById('stations-list');
     const filterFuel = document.getElementById('filter-fuel');
 
@@ -209,19 +216,36 @@ document.addEventListener('DOMContentLoaded', () => {
             updateUI();
         });
     } else {
-        updateUI(); // Se não tem nuvem, apenas atualiza com os dados locais
+        // Validação de segurança local: Se os dados antigos não tem "prices" (objeto com múltiplos combativeis),
+        // apagar os velhos para não crashar a página com o novo modelo.
+        if (stations.length > 0 && stations[0].price !== undefined) {
+             console.warn("Limpando banco de dados local antigo incompatível com nova versão multi-combustível.");
+             stations = [];
+             localStorage.setItem('gasStations', JSON.stringify([]));
+        }
+        updateUI(); 
     }
 
     form.addEventListener('submit', (e) => {
         e.preventDefault();
 
         const name = stationNameInput.value.trim();
-        const fuel = fuelTypeInput.value;
-        const price = parseFloat(priceInput.value);
         const lat = latInput.value;
         const lng = lngInput.value;
+        
+        // Coleta todos os preços preenchidos
+        const prices = {};
+        let hasPrice = false;
+        
+        for (const [fuelType, inputElement] of Object.entries(priceInputs)) {
+            const val = parseFloat(inputElement.value);
+            if (val > 0) {
+                prices[fuelType] = val;
+                hasPrice = true;
+            }
+        }
 
-        if (name && fuel && price > 0) {
+        if (name && hasPrice) {
             if (!lat || !lng) {
                 alert("Por favor, informe a localização do posto pelo GPS ou clicando no mapinha.");
                 return;
@@ -229,8 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const stationData = {
                 name,
-                fuel,
-                price,
+                prices,
                 lat: parseFloat(lat),
                 lng: parseFloat(lng),
                 timestamp: Date.now()
@@ -264,7 +287,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Limpa o formulário
             stationNameInput.value = '';
-            priceInput.value = '';
+            for (const input of Object.values(priceInputs)) {
+                input.value = '';
+            }
             latInput.value = '';
             lngInput.value = '';
             gmapsLinkInput.value = '';
@@ -290,12 +315,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filteredStations.forEach(station => {
             const row = document.createElement('tr');
+            
+            // Generate Badges HTML
+            let badgesHTML = '<div class="price-list-display">';
+            
+            let orderedFuels = ['Gasolina Comum', 'Gasolina Aditivada', 'Etanol', 'Diesel'];
+            
+            orderedFuels.forEach(fType => {
+                if(station.prices && station.prices[fType]) {
+                   let badgeClass = '';
+                   let iconClass = '';
+                   if(fType === 'Gasolina Comum') { badgeClass = 'badge-comum'; iconClass = 'fa-gas-pump'; }
+                   if(fType === 'Gasolina Aditivada') { badgeClass = 'badge-aditivada'; iconClass = 'fa-bolt'; }
+                   if(fType === 'Etanol') { badgeClass = 'badge-etanol'; iconClass = 'fa-leaf'; }
+                   if(fType === 'Diesel') { badgeClass = 'badge-diesel'; iconClass = 'fa-truck'; }
+                   
+                   badgesHTML += `<span class="fuel-badge ${badgeClass}"><i class="fa-solid ${iconClass}"></i> ${fType.split(' ')[0]}: ${formatCurrency(station.prices[fType])}</span>`;
+                }
+            });
+            badgesHTML += '</div>';
 
             row.innerHTML = `
                 <td data-label="Posto"><strong>${escapeHTML(station.name)}</strong></td>
-                <td data-label="Combustível"><span class="fuel-badge">${escapeHTML(station.fuel)}</span></td>
-                <td data-label="Preço"><strong>${formatCurrency(station.price)}</strong></td>
-                <td data-label="Ação">
+                <td data-label="Preços Registrados">${badgesHTML}</td>
+                <td data-label="Ações">
                     <div class="action-buttons">
                         <a href="https://www.google.com/maps/search/?api=1&query=${station.lat},${station.lng}" target="_blank" class="btn-maps" title="Traçar Rota no Maps">
                             <i class="fa-solid fa-map-location-dot"></i>
@@ -314,13 +357,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function updateStats(filteredStations) {
-        if (filteredStations.length === 0) {
-            cheapestPriceEl.textContent = 'R$ 0,00';
-            cheapestStationEl.textContent = '-';
-            averagePriceEl.textContent = 'R$ 0,00';
-            expensivePriceEl.textContent = 'R$ 0,00';
-            expensiveStationEl.textContent = '-';
+    function updateStats(filteredStations, currentFilterType) {
+        if (filteredStations.length === 0 || currentFilterType === 'Todos') {
+            // Se for visão geral ou vazio, exibe traço
+            cheapestPriceEl.textContent = '-';
+            cheapestStationEl.textContent = 'Filtre um tipo';
+            averagePriceEl.textContent = '-';
+            expensivePriceEl.textContent = '-';
+            expensiveStationEl.textContent = 'Filtre um tipo';
             return;
         }
 
@@ -329,29 +373,43 @@ document.addEventListener('DOMContentLoaded', () => {
         let minStation = '';
         let maxStation = '';
         let sum = 0;
+        let count = 0;
 
         filteredStations.forEach(station => {
-            if (station.price < minPrice) {
-                minPrice = station.price;
-                minStation = station.name;
+            if (station.prices && station.prices[currentFilterType]) {
+                const thePrice = station.prices[currentFilterType];
+                
+                if (thePrice < minPrice) {
+                    minPrice = thePrice;
+                    minStation = station.name;
+                }
+                if (thePrice > maxPrice) {
+                    maxPrice = thePrice;
+                    maxStation = station.name;
+                }
+                
+                sum += thePrice;
+                count++;
             }
-            if (station.price > maxPrice) {
-                maxPrice = station.price;
-                maxStation = station.name;
-            }
-            sum += station.price;
         });
 
-        const avgPrice = sum / filteredStations.length;
-
-        cheapestPriceEl.textContent = formatCurrency(minPrice);
-        cheapestStationEl.textContent = minStation;
-        expensivePriceEl.textContent = formatCurrency(maxPrice);
-        expensiveStationEl.textContent = maxStation;
-        averagePriceEl.textContent = formatCurrency(avgPrice);
+        if (count > 0) {
+            const avgPrice = sum / count;
+            cheapestPriceEl.textContent = formatCurrency(minPrice);
+            cheapestStationEl.textContent = minStation;
+            expensivePriceEl.textContent = formatCurrency(maxPrice);
+            expensiveStationEl.textContent = maxStation;
+            averagePriceEl.textContent = formatCurrency(avgPrice);
+        } else {
+            cheapestPriceEl.textContent = '-';
+            cheapestStationEl.textContent = '-';
+            averagePriceEl.textContent = '-';
+            expensivePriceEl.textContent = '-';
+            expensiveStationEl.textContent = '-';
+        }
     }
 
-    function updateMapMarkers(filteredStations) {
+    function updateMapMarkers(filteredStations, currentFilterType) {
         // Limpar os marcadores anteriores do mapa principal
         mainMarkers.forEach(marker => mainMap.removeLayer(marker));
         mainMarkers = [];
@@ -361,30 +419,37 @@ document.addEventListener('DOMContentLoaded', () => {
         // Fazer um bouding box pra ajustar a tela pros postos visíveis
         const bounds = [];
         
-        // Find min and max prices
+        // Find min and max prices IF filtering specific fuel to color pins
         let minPrice = Infinity;
         let maxPrice = -Infinity;
-        filteredStations.forEach(station => {
-            if (station.price < minPrice) minPrice = station.price;
-            if (station.price > maxPrice) maxPrice = station.price;
-        });
+        
+        if (currentFilterType !== 'Todos') {
+            filteredStations.forEach(station => {
+                if (station.prices && station.prices[currentFilterType]) {
+                    const price = station.prices[currentFilterType];
+                    if (price < minPrice) minPrice = price;
+                    if (price > maxPrice) maxPrice = price;
+                }
+            });
+        }
 
         filteredStations.forEach(station => {
             if (station.lat && station.lng) {
-                // Determina a cor com base no preço
+                // Determina a cor com base no preço (Apenas funciona eficientemente dentro de filtros específicos)
                 let bgColor = 'var(--primary)'; // Azul padrão
                 let zIndex = 0; // Ordem normal
                 
-                if (filteredStations.length > 1) { // Só aplica cores se houver mais de 1 posto para comparar
-                    if (station.price === minPrice) {
+                if (currentFilterType !== 'Todos' && filteredStations.length > 1 && station.prices && station.prices[currentFilterType]) {
+                    const price = station.prices[currentFilterType];
+                    if (price === minPrice) {
                         bgColor = 'var(--accent-green)'; // Verde pro mais barato
                         zIndex = 1000; // Traz pra frente
-                    } else if (station.price === maxPrice) {
+                    } else if (price === maxPrice) {
                         bgColor = 'var(--accent-red)'; // Vermelho pro mais caro
                     }
                 }
 
-                // Cria ícone dinâmico em vez do global `pumpIcon`
+                // Cria ícone dinâmico
                 const markerIcon = L.divIcon({
                     html: `<i class="fa-solid fa-gas-pump" style="color: white; font-size: 16px; background: ${bgColor}; padding: 8px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></i>`,
                     className: 'custom-div-icon',
@@ -392,6 +457,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     iconAnchor: [18, 18],
                     popupAnchor: [0, -18]
                 });
+                
+                // Formatar lista de preços para o Popup
+                let popupPricesHTML = '';
+                if(station.prices) {
+                    for (const [fuelType, price] of Object.entries(station.prices)) {
+                        popupPricesHTML += `<div style="display:flex; justify-content:space-between; margin-bottom: 2px;">
+                            <span style="color: #666; font-size: 0.9em; margin-right: 15px;">${fuelType}</span>
+                            <strong style="font-size: 0.9em;">${formatCurrency(price)}</strong>
+                        </div>`;
+                    }
+                }
 
                 const marker = L.marker([station.lat, station.lng], {
                     icon: markerIcon,
@@ -401,9 +477,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     .bindPopup(`
                         <div style="font-family: 'Inter', sans-serif; min-width: 140px;">
                             <strong style="font-size: 1.1em; color: var(--primary);">${escapeHTML(station.name)}</strong><br>
-                            <span style="color: #666; font-size: 0.9em;">Tipo: ${escapeHTML(station.fuel)}</span><br>
-                            <strong style="font-size: 1.25em; margin-top: 5px; display: inline-block;">${formatCurrency(station.price)}</strong><br>
-                            <a href="https://www.google.com/maps/search/?api=1&query=${station.lat},${station.lng}" target="_blank" style="display:inline-block; margin-top:10px; padding:6px 10px; background:var(--primary); color:white; text-decoration:none; border-radius:4px; font-weight:bold; font-size:0.85em;">
+                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee;">
+                                ${popupPricesHTML}
+                            </div>
+                            <a href="https://www.google.com/maps/search/?api=1&query=${station.lat},${station.lng}" target="_blank" style="display:inline-block; margin-top:10px; padding:6px 10px; background:var(--primary); color:white; text-decoration:none; border-radius:4px; font-weight:bold; font-size:0.85em; width: 100%; text-align: center; box-sizing: border-box;">
                                 <i class="fa-solid fa-diamond-turn-right"></i> Abrir no Maps
                             </a>
                         </div>
@@ -424,22 +501,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const filterValue = filterFuel.value;
         const filteredStations = filterValue === 'Todos'
             ? stations
-            : stations.filter(s => s.fuel === filterValue);
+            : stations.filter(s => s.prices && s.prices[filterValue] !== undefined);
 
-        // Sort by price
-        filteredStations.sort((a, b) => a.price - b.price);
+        // O Sort default agora vai ser alfabético quando é "Todos", e por preço apenas se um combustível estiver selecionado
+        if (filterValue !== 'Todos') {
+            filteredStations.sort((a, b) => a.prices[filterValue] - b.prices[filterValue]);
+        } else {
+             filteredStations.sort((a, b) => a.name.localeCompare(b.name));
+        }
 
         renderList(filteredStations);
-        updateStats(filteredStations);
-        updateMapMarkers(filteredStations);
+        updateStats(filteredStations, filterValue);
+        updateMapMarkers(filteredStations, filterValue);
     }
 
     window.editStation = function (id) {
         const station = stations.find(s => s.id === id);
         if (station) {
             stationNameInput.value = station.name;
-            fuelTypeInput.value = station.fuel;
-            priceInput.value = station.price;
+            
+            // Preenche as caixinhas de preço de cada um se existir
+            for (const [fuelType, inputElement] of Object.entries(priceInputs)) {
+                if (station.prices && station.prices[fuelType]) {
+                    inputElement.value = station.prices[fuelType];
+                } else {
+                    inputElement.value = '';
+                }
+            }
             
             if (station.lat && station.lng) {
                 setPickerLocation(station.lat, station.lng, true);
@@ -459,7 +547,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.cancelEdit = function () {
         editingId = null;
         stationNameInput.value = '';
-        priceInput.value = '';
+        for (const input of Object.values(priceInputs)) {
+            input.value = '';
+        }
         latInput.value = '';
         lngInput.value = '';
         gmapsLinkInput.value = '';
