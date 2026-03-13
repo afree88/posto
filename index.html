@@ -2,58 +2,84 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Comparador de Combustível</title>
+    <meta name="description" content="Encontre o melhor preço de combustível na sua cidade em tempo real.">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Leaflet CSS for Maps -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 </head>
 <body>
     <div class="container">
         <header>
             <div class="logo">
-                <i class="fa-solid fa-gas-pump"></i>
-                <h1>Comparador de Combustível</h1>
+                <div class="logo-icon-wrap">
+                    <i class="fa-solid fa-gas-pump"></i>
+                </div>
+                <h1>Comparador<br>de Combustível</h1>
             </div>
-            <p>Encontre o melhor preço para abastecer o seu veículo</p>
+            <p>Encontre o melhor preço para abastecer</p>
         </header>
 
         <main>
+            <!-- Seção Adicionar Preço -->
             <section class="card input-section">
-                <h2>Adicionar Preço</h2>
+                <h2><i class="fa-solid fa-plus-circle"></i> Adicionar Posto</h2>
+
                 <form id="price-form">
                     <div class="form-group">
                         <label for="station-name">Nome do Posto</label>
                         <input type="text" id="station-name" placeholder="Ex: Posto Ipiranga Centro" required>
                     </div>
-                    <div class="form-row prices-row">
-                        <div class="form-group price-input">
-                            <label for="price-gascomum">Gasolina Comum</label>
-                            <input type="number" id="price-gascomum" step="0.01" min="0.01" placeholder="Ex: 5.49">
+
+                    <div class="section-label">
+                        <span>Preços (R$)</span>
+                    </div>
+
+                    <div class="prices-row">
+                        <div class="form-group">
+                            <label class="price-label">
+                                <span class="dot dot-comum"></span> Gas. Comum
+                            </label>
+                            <div class="price-input-wrap">
+                                <input type="number" id="price-gascomum" step="0.01" min="0.01" placeholder="5,49">
+                            </div>
                         </div>
-                        <div class="form-group price-input">
-                            <label for="price-gasaditivada">Gasolina Aditivada</label>
-                            <input type="number" id="price-gasaditivada" step="0.01" min="0.01" placeholder="Ex: 5.69">
+                        <div class="form-group">
+                            <label class="price-label">
+                                <span class="dot dot-aditivada"></span> Gas. Aditivada
+                            </label>
+                            <div class="price-input-wrap">
+                                <input type="number" id="price-gasaditivada" step="0.01" min="0.01" placeholder="5,69">
+                            </div>
                         </div>
-                        <div class="form-group price-input">
-                            <label for="price-etanol">Etanol</label>
-                            <input type="number" id="price-etanol" step="0.01" min="0.01" placeholder="Ex: 3.49">
+                        <div class="form-group">
+                            <label class="price-label">
+                                <span class="dot dot-etanol"></span> Etanol
+                            </label>
+                            <div class="price-input-wrap">
+                                <input type="number" id="price-etanol" step="0.01" min="0.01" placeholder="3,49">
+                            </div>
                         </div>
-                        <div class="form-group price-input">
-                            <label for="price-diesel">Diesel</label>
-                            <input type="number" id="price-diesel" step="0.01" min="0.01" placeholder="Ex: 6.10">
+                        <div class="form-group">
+                            <label class="price-label">
+                                <span class="dot dot-diesel"></span> Diesel
+                            </label>
+                            <div class="price-input-wrap">
+                                <input type="number" id="price-diesel" step="0.01" min="0.01" placeholder="6,10">
+                            </div>
                         </div>
                     </div>
-                    
+
                     <div class="form-group map-group">
-                        <label>Localização (Cole Link do Maps ou use GPS)</label>
-                        <input type="text" id="gmaps-link" placeholder="Cole o link completo do Google Maps aqui..." style="margin-bottom: 0.75rem;">
+                        <label>Localização</label>
+                        <input type="text" id="gmaps-link" placeholder="Cole o link do Google Maps aqui..." style="margin-bottom: 0.6rem;">
                         <div class="location-controls">
                             <button type="button" id="get-location-btn" class="btn-secondary btn-small">
-                                <i class="fa-solid fa-location-crosshairs"></i> Pegar GPS Automático
+                                <i class="fa-solid fa-location-crosshairs"></i> GPS Automático
                             </button>
                             <span id="location-status" class="status-msg"></span>
                         </div>
@@ -64,7 +90,8 @@
 
                     <div class="form-actions">
                         <button type="submit" id="submit-btn" class="btn-primary">
-                            <i class="fa-solid fa-plus"></i> <span id="submit-text">Adicionar</span>
+                            <i class="fa-solid fa-plus"></i>
+                            <span id="submit-text">Adicionar</span>
                         </button>
                         <button type="button" id="cancel-btn" class="btn-secondary hidden" onclick="window.cancelEdit()">
                             <i class="fa-solid fa-xmark"></i> Cancelar
@@ -73,9 +100,12 @@
                 </form>
             </section>
 
+            <!-- Dashboard de Resultados -->
             <section class="results-dashboard">
+
+                <!-- Filtro -->
                 <div class="filter-group">
-                    <label for="filter-fuel">Filtrar por Combustível:</label>
+                    <label for="filter-fuel"><i class="fa-solid fa-filter"></i> Filtrar:</label>
                     <select id="filter-fuel">
                         <option value="Todos">Visão Geral (Todos)</option>
                         <option value="Gasolina Comum">Gasolina Comum</option>
@@ -85,9 +115,10 @@
                     </select>
                 </div>
 
+                <!-- Cards de Estatística -->
                 <div class="stats-grid">
                     <div class="stat-card cheapest">
-                        <div class="stat-icon"><i class="fa-solid fa-arrow-down-up-across-line"></i></div>
+                        <div class="stat-icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
                         <div class="stat-info">
                             <h3>Mais Barato</h3>
                             <p id="cheapest-price" class="value">R$ 0,00</p>
@@ -95,15 +126,15 @@
                         </div>
                     </div>
                     <div class="stat-card average">
-                        <div class="stat-icon"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="stat-icon"><i class="fa-solid fa-chart-bar"></i></div>
                         <div class="stat-info">
-                            <h3>Média de Preço</h3>
+                            <h3>Média</h3>
                             <p id="average-price" class="value">R$ 0,00</p>
                             <span class="station-name">Baseado nas entradas</span>
                         </div>
                     </div>
                     <div class="stat-card expensive">
-                        <div class="stat-icon"><i class="fa-solid fa-arrow-up-right-dots"></i></div>
+                        <div class="stat-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
                         <div class="stat-info">
                             <h3>Mais Caro</h3>
                             <p id="expensive-price" class="value">R$ 0,00</p>
@@ -111,14 +142,16 @@
                         </div>
                     </div>
                 </div>
-                
+
+                <!-- Mapa Principal -->
                 <div class="card map-section">
                     <h2><i class="fa-solid fa-map-location-dot"></i> Mapa de Postos</h2>
                     <div id="main-map" class="map-container main-map"></div>
                 </div>
 
+                <!-- Lista/Tabela de Postos -->
                 <div class="card list-section">
-                    <h2>Histórico de Registros</h2>
+                    <h2><i class="fa-solid fa-list-check"></i> Histórico de Registros</h2>
                     <div class="table-responsive">
                         <table id="stations-table">
                             <thead>
@@ -129,17 +162,19 @@
                                 </tr>
                             </thead>
                             <tbody id="stations-list">
-                                <!-- Items will be dynamically added here -->
-                                <tr class="empty-row"><td colspan="4">Nenhum posto registrado ainda.</td></tr>
+                                <tr class="empty-row">
+                                    <td colspan="4">Nenhum posto registrado ainda.</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
+
             </section>
         </main>
     </div>
-    
-    <!-- Leaflet JS for Maps -->
+
+    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script type="module" src="script.js"></script>
 </body>
