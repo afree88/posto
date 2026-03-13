@@ -360,10 +360,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Fazer um bouding box pra ajustar a tela pros postos visíveis
         const bounds = [];
+        
+        // Find min and max prices
+        let minPrice = Infinity;
+        let maxPrice = -Infinity;
+        filteredStations.forEach(station => {
+            if (station.price < minPrice) minPrice = station.price;
+            if (station.price > maxPrice) maxPrice = station.price;
+        });
 
         filteredStations.forEach(station => {
             if (station.lat && station.lng) {
-                const marker = L.marker([station.lat, station.lng], {icon: pumpIcon})
+                // Determina a cor com base no preço
+                let bgColor = 'var(--primary)'; // Azul padrão
+                let zIndex = 0; // Ordem normal
+                
+                if (filteredStations.length > 1) { // Só aplica cores se houver mais de 1 posto para comparar
+                    if (station.price === minPrice) {
+                        bgColor = 'var(--accent-green)'; // Verde pro mais barato
+                        zIndex = 1000; // Traz pra frente
+                    } else if (station.price === maxPrice) {
+                        bgColor = 'var(--accent-red)'; // Vermelho pro mais caro
+                    }
+                }
+
+                // Cria ícone dinâmico em vez do global `pumpIcon`
+                const markerIcon = L.divIcon({
+                    html: `<i class="fa-solid fa-gas-pump" style="color: white; font-size: 16px; background: ${bgColor}; padding: 8px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></i>`,
+                    className: 'custom-div-icon',
+                    iconSize: [36, 36],
+                    iconAnchor: [18, 18],
+                    popupAnchor: [0, -18]
+                });
+
+                const marker = L.marker([station.lat, station.lng], {
+                    icon: markerIcon,
+                    zIndexOffset: zIndex
+                })
                     .addTo(mainMap)
                     .bindPopup(`
                         <div style="font-family: 'Inter', sans-serif; min-width: 140px;">
