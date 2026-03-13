@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparador de Combustível</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fa-solid fa-gas-pump"></i>
+                <h1>Comparador de Combustível</h1>
+            </div>
+            <p>Encontre o melhor preço para abastecer o seu veículo</p>
+        </header>
+
+        <main>
+            <section class="card input-section">
+                <h2>Adicionar Preço</h2>
+                <form id="price-form">
+                    <div class="form-group">
+                        <label for="station-name">Nome do Posto</label>
+                        <input type="text" id="station-name" placeholder="Ex: Posto Ipiranga Centro" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fuel-type">Combustível</label>
+                            <select id="fuel-type" required>
+                                <option value="Gasolina Comum">Gasolina Comum</option>
+                                <option value="Gasolina Aditivada">Gasolina Aditivada</option>
+                                <option value="Etanol">Etanol</option>
+                                <option value="Diesel">Diesel</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="price">Preço (R$)</label>
+                            <input type="number" id="price" step="0.01" min="0.01" placeholder="Ex: 5.49" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-plus"></i> Adicionar
+                    </button>
+                </form>
+            </section>
+
+            <section class="results-dashboard">
+                <div class="filter-group">
+                    <label for="filter-fuel">Filtrar por Combustível:</label>
+                    <select id="filter-fuel">
+                        <option value="Todos">Visão Geral (Todos)</option>
+                        <option value="Gasolina Comum">Gasolina Comum</option>
+                        <option value="Gasolina Aditivada">Gasolina Aditivada</option>
+                        <option value="Etanol">Etanol</option>
+                        <option value="Diesel">Diesel</option>
+                    </select>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card cheapest">
+                        <div class="stat-icon"><i class="fa-solid fa-arrow-down-up-across-line"></i></div>
+                        <div class="stat-info">
+                            <h3>Mais Barato</h3>
+                            <p id="cheapest-price" class="value">R$ 0,00</p>
+                            <span id="cheapest-station" class="station-name">-</span>
+                        </div>
+                    </div>
+                    <div class="stat-card average">
+                        <div class="stat-icon"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="stat-info">
+                            <h3>Média de Preço</h3>
+                            <p id="average-price" class="value">R$ 0,00</p>
+                            <span class="station-name">Baseado nas entradas</span>
+                        </div>
+                    </div>
+                    <div class="stat-card expensive">
+                        <div class="stat-icon"><i class="fa-solid fa-arrow-up-right-dots"></i></div>
+                        <div class="stat-info">
+                            <h3>Mais Caro</h3>
+                            <p id="expensive-price" class="value">R$ 0,00</p>
+                            <span id="expensive-station" class="station-name">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card list-section">
+                    <h2>Histórico de Registros</h2>
+                    <div class="table-responsive">
+                        <table id="stations-table">
+                            <thead>
+                                <tr>
+                                    <th>Posto</th>
+                                    <th>Combustível</th>
+                                    <th>Preço (R$)</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stations-list">
+                                <!-- Items will be dynamically added here -->
+                                <tr class="empty-row"><td colspan="4">Nenhum posto registrado ainda.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script type="module" src="script.js"></script>
+</body>
+</html>
